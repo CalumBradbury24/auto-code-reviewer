@@ -1,0 +1,24 @@
+{
+  "name": "auto-code-reviewer",
+  "version": "1.0.0",
+  "description": "Pulls PRs the bot is assigned to and feeds them to a local llm for feedback. Then posts the feedback in the form of comments on the target PR.",
+  "license": "ISC",
+  "author": "Calum bradbury",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "dev": "set NODE_ENV=development&&npx tsx --watch server.ts",
+    "prod": "set NODE_ENV=production&&node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.2",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
