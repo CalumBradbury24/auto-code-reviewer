@@ -10,15 +10,20 @@
     "dev": "set NODE_ENV=development&&npx tsx --watch server.ts",
     "prod": "set NODE_ENV=production&&node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc"
+    "build": "npx tsc",
+    "gen:octokit-types": "curl -L https://raw.githubusercontent.com/octokit/openapi/main/generated/rest.json > ./octokit-openapi.json && npx openapi-typescript ./octokit-openapi.json --output src/octokit-types.ts"
   },
   "devDependencies": {
+    "@octokit/openapi-types": "^27.0.0",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.2",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.3",
-    "typescript": "^6.0.3"
+    "typescript": "^5.6.3"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "octokit": "^5.0.5"
   }
 }

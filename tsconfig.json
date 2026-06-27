@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2016",
@@ -19,10 +20,16 @@
     "moduleDetection": "force",
     "types": [
       "node"
-    ]
+    ],
+    "paths": {
+      "@octokit/openapi-types": [
+        "node_modules/@octokit/openapi-types"
+      ]
+    }
   },
   "include": [
     "src/**/*",
-    "*.ts"
+    "*.ts",
+    "github/github.api.ts"
   ]
 }

@@ -1,3 +1,5 @@
+import './config';
+
 process.on("uncaughtException", (error) => {
     console.log("uncaught exception - ...server closing down.");
     console.log(error.name, error.message); //Catch and log the error name and message
