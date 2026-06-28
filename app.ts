@@ -1,6 +1,6 @@
 import express from 'express';
 import { eventEmitter } from './events';
-import { fetchReviewRequests, fetchUserRepositories } from './github/github.api';
+import { fetchPrDiffs, fetchReviewRequests, fetchUserRepositories } from './github/github.api';
 
 // Start express app
 const app = express();
@@ -11,23 +11,22 @@ eventEmitter.on('start:polling:github', async () => {
     try {
         // 1. Fetch all repos where the bot is the assigned reviewer
         const repos = await fetchReviewRequests();//await fetchUserRepositories();
-        repos.forEach(r => console.log(r.title))
+        console.log(`**** ${repos.length} REPOS FOUND REQUIRING REVIEW *****`);
+        console.log('--------------------------------------------------------------------------------------------')
+        repos.forEach(r => {
+            console.log('Id: ', r.id)
+            console.log('Title: ', r.title);
+            console.log('URL: ', r.url);
+            console.log(r)
+            console.log('--------------------------------------------------------------------------------------------')
+        })
         const results = [];
 
-        // 2. For each repo, list PRs and filter by reviewer
-        // for (const repo of repos.data) {
-        //     const prs = await octokit.rest.pulls.list({
-        //         owner,
-        //         repo: repo.name,
-        //         state: "open"
-        //     });
+        // 2. Push each PR job to the queue
+        // 2. Fetch diffs for each matching PR
+        await fetchPrDiffs(repos[0])
 
-        //     const assigned = prs.data.filter(pr =>
-        //         pr.requested_reviewers.some(r => r.login === reviewer)
-        //     );
-        // }
 
-        // 3. Fetch diffs for each matching PR
         // for (const pr of assigned) {
         //     const diff = await octokit.request(
         //         "GET /repos/{owner}/{repo}/pulls/{pull_number}",

@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-import { AuthedUserListReposResponse } from './types';
+import { AuthedUserListReposResponse, SearchIssuesAndPrsGetResponseItems } from './types';
 
 const githubApi = new Octokit({
     auth: process.env.GITHUB_REVIEW_BOT_TOKEN, //process.env.GITHUB_API_TOKEN
@@ -85,6 +85,24 @@ export async function fetchReviewRequests() {
             per_page: 50, // Return up to 50 per request
             page: 1 // Start at first page of data
         }
-    })
+    });
+
     return response;
+}
+
+export async function fetchPrDiffs(pullRequest: SearchIssuesAndPrsGetResponseItems[number]) {
+    const repoUrl = pullRequest.repository_url.match(/repos\/([^/]+)\/([^/]+)/);
+
+    if (!repoUrl) throw new Error(`Could not parse owner and repo from URL: ${repoUrl}`);
+    const [, owner, repo] = repoUrl;
+
+    const { data: diff } = await githubApi.pulls.get({
+        owner,
+        repo,
+        pull_number: pullRequest.number,
+        mediaType: { format: "diff" }
+    });
+
+    console.log('DIFFF --->>> ', diff)
+    return diff;
 }
