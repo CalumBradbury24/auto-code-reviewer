@@ -6,7 +6,7 @@ const githubApi = new Octokit({
 }).rest;
 
 
-function parseData(data) {
+function parseData(data: any) {
     // If the data is an array, return that
     if (Array.isArray(data)) {
         return data
@@ -23,15 +23,17 @@ function parseData(data) {
     delete data.incomplete_results;
     delete data.repository_selection;
     delete data.total_count;
+
     // Pull out the array of items
     const namespaceKey = Object.keys(data)[0];
+    if (!namespaceKey) return [];
     data = data[namespaceKey];
 
     return data;
 }
 
-type getPaginatedDataProps = {
-    apiFunction: (options: {}) => {},
+type getPaginatedDataProps<T> = {
+    apiFunction: (options: any) => Promise<{ data: any; headers: any }>,
     options: {
         per_page: number;
         page: number;
@@ -40,9 +42,9 @@ type getPaginatedDataProps = {
     }
 }
 
-const getPaginatedData = async ({ apiFunction, options }: getPaginatedDataProps) => {
+const getPaginatedData = async <T>({ apiFunction, options }: getPaginatedDataProps<T>): Promise<T[]> => {
     let pagesRemaining = true;
-    let data = [];
+    let data: T[] = [];
 
     while (pagesRemaining) {
         console.log('Fetching page: ', options.page || '1')
@@ -66,7 +68,7 @@ const getPaginatedData = async ({ apiFunction, options }: getPaginatedDataProps)
 export async function fetchUserRepositories(): Promise<AuthedUserListReposResponse> {
     const owner = process.env.GITHUB_OWNER;
     if (!owner) throw new Error('No repository owner found for fetchUserRepositories');
-    const response = await getPaginatedData({
+    const response = await getPaginatedData<AuthedUserListReposResponse[number]>({
         apiFunction: githubApi.repos.listForAuthenticatedUser, options: {
             affiliation: 'owner',
             per_page: 5,
@@ -78,8 +80,8 @@ export async function fetchUserRepositories(): Promise<AuthedUserListReposRespon
 }
 
 // Get all open PRs with review requests for this bot
-export async function fetchReviewRequests() {
-    const response = await getPaginatedData({
+export async function fetchReviewRequests(): Promise<SearchIssuesAndPrsGetResponseItems> {
+    const response = await getPaginatedData<SearchIssuesAndPrsGetResponseItems[number]>({
         apiFunction: githubApi.search.issuesAndPullRequests, options: {
             q: 'is:pr is:open review-requested:@me', // Get all PRs the review bot is assigned as reviewer to
             per_page: 50, // Return up to 50 per request
