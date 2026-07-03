@@ -90,8 +90,13 @@ export async function fetchReviewRequests() {
     return response;
 }
 
-export async function fetchPrDiffs(pullRequest: SearchIssuesAndPrsGetResponseItems[number]) {
-    const repoUrl = pullRequest.repository_url.match(/repos\/([^/]+)\/([^/]+)/);
+type fetchPrDiffsProps = {
+    repository_url: SearchIssuesAndPrsGetResponseItems[number]['repository_url'],
+    pr_number: SearchIssuesAndPrsGetResponseItems[number]['number'],
+
+}
+export async function fetchPrDiffs({ repository_url, pr_number }: fetchPrDiffsProps) {
+    const repoUrl = repository_url.match(/repos\/([^/]+)\/([^/]+)/);
 
     if (!repoUrl) throw new Error(`Could not parse owner and repo from URL: ${repoUrl}`);
     const [, owner, repo] = repoUrl;
@@ -99,7 +104,7 @@ export async function fetchPrDiffs(pullRequest: SearchIssuesAndPrsGetResponseIte
     const { data: diff } = await githubApi.pulls.get({
         owner,
         repo,
-        pull_number: pullRequest.number,
+        pull_number: pr_number,
         mediaType: { format: "diff" }
     });
 

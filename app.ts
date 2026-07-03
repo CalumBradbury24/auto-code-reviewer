@@ -1,30 +1,40 @@
 import express from 'express';
 import { eventEmitter } from './events';
-import { fetchPrDiffs, fetchReviewRequests, fetchUserRepositories } from './github/github.api';
+import { reviewQueue } from './review-queue/queue';
+import { fetchReviewRequests } from './github/github.api';
 
 // Start express app
 const app = express();
 
 eventEmitter.on('start:polling:github', async () => {
+    await reviewQueue.obliterate({ force: true }); // clean queue for testing
 
-
+    console.log(`------------------------------- Github Review Process Starting... ------------------------- \n`)
     try {
         // 1. Fetch all repos where the bot is the assigned reviewer
         const repos = await fetchReviewRequests();//await fetchUserRepositories();
-        console.log(`**** ${repos.length} REPOS FOUND REQUIRING REVIEW *****`);
-        console.log('--------------------------------------------------------------------------------------------')
-        repos.forEach(r => {
-            console.log('Id: ', r.id)
-            console.log('Title: ', r.title);
-            console.log('URL: ', r.url);
-            console.log(r)
-            console.log('--------------------------------------------------------------------------------------------')
-        })
-        const results = [];
+        console.log(`------------------------------- ${repos.length} REPOS FOUND REQUIRING REVIEW ------------------------- \n`)
 
         // 2. Push each PR job to the queue
-        // 2. Fetch diffs for each matching PR
-        await fetchPrDiffs(repos[0])
+        for (const repo of repos) {
+            console.log('Id: ', repo.id)
+            console.log('Title: ', repo.title);
+            console.log('URL: ', repo.url);
+            //console.log(repo)
+            await reviewQueue.add(
+                'github-review',
+                { repoId: repo.id, repoUrl: repo.repository_url, prNumber: repo.number },
+                { jobId: `pr-${repo.id}` } // used for deduplication
+            );
+            console.log(`------------------------------- ${repo.title} PUSHED TO QUEUE ------------------------- \n`)
+        }
+
+        console.log(await reviewQueue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed'));
+
+        // 3. Import and start worker
+        await import('./review-queue/worker');
+
+        // 3. Fetch diffs for each matching PR
 
 
         // for (const pr of assigned) {
