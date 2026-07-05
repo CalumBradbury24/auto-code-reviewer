@@ -1,5 +1,6 @@
 import { Octokit } from 'octokit';
 import { AuthedUserListReposResponse, SearchIssuesAndPrsGetResponseItems } from './types';
+import logger from 'logger';
 
 const githubApi = new Octokit({
     auth: process.env.GITHUB_REVIEW_BOT_TOKEN, //process.env.GITHUB_API_TOKEN
@@ -47,7 +48,7 @@ const getPaginatedData = async <T>({ apiFunction, options }: getPaginatedDataPro
     let data: T[] = [];
 
     while (pagesRemaining) {
-        console.log('Fetching page: ', options.page || '1')
+        logger.info('Fetching page: ', options.page || '1')
         const response = await apiFunction(options);
 
         const parsedData = parseData(response.data)
@@ -110,6 +111,6 @@ export async function fetchPrDiffs({ repository_url, pr_number }: fetchPrDiffsPr
         mediaType: { format: "diff" }
     });
 
-    console.log('DIFFF --->>> ', diff)
+    // console.log('DIFFF --->>> ', diff)
     return diff;
 }

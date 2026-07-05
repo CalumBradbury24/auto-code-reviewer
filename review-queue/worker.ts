@@ -1,3 +1,4 @@
+import logger from 'logger';
 import { Worker } from 'bullmq';
 import { redisConnection } from './config';
 import { fetchPrDiffs } from 'github/github.api';
@@ -6,12 +7,13 @@ import { fetchPrDiffs } from 'github/github.api';
 const reviewWorker = new Worker(
     'review-queue',
     async (job) => {
-        console.log(`\n🔄 Processing job ${job.id}...`);
-        console.log('Job data:', job.data);
+        logger.info(`\n🔄 Processing job ${job.id}...`);
+        logger.info('Job data:', job.data);
 
         const { repoUrl, prNumber } = job.data;
 
-        await fetchPrDiffs({ repository_url: repoUrl, pr_number: prNumber })
+        const diffs = await fetchPrDiffs({ repository_url: repoUrl, pr_number: prNumber });
+        // console.log('DIFFF --->>> ', diffs)
 
 
         // await performCodeReview(repoId, title, url);
@@ -19,7 +21,7 @@ const reviewWorker = new Worker(
         // Simulate some work
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        console.log(`✅ Completed job ${job.id}`);
+        logger.info(`✅ Completed job ${job.id}`);
         return { success: true };
     },
     {
@@ -30,19 +32,19 @@ const reviewWorker = new Worker(
 
 // Worker event listeners
 reviewWorker.on('completed', (job) => {
-    console.log(`✓ Job ${job.id} completed successfully`);
+    logger.info(`✓ Job ${job.id} completed successfully`);
 });
 
 reviewWorker.on('failed', (job, err) => {
-    console.error(`✗ Job ${job?.id} failed:`, err.message);
+    logger.error(`✗ Job ${job?.id} failed:`, err.message);
 });
 
 reviewWorker.on('ready', () => {
-    console.log('✓ Worker connected and ready to process jobs');
+    logger.info('✓ Worker connected and ready to process jobs');
 });
 
 reviewWorker.on('error', (err) => {
-    console.error('✗ Worker error:', err);
+    logger.error('✗ Worker error:', err);
 });
 
 export { reviewWorker };

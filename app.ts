@@ -1,4 +1,6 @@
 import express from 'express';
+import logger from 'logger';
+
 import { eventEmitter } from './events';
 import { reviewQueue } from './review-queue/queue';
 import { fetchReviewRequests } from './github/github.api';
@@ -9,15 +11,14 @@ const app = express();
 eventEmitter.on('start:polling:github', async () => {
     await reviewQueue.obliterate({ force: true }); // clean queue for testing
 
-    console.log(`------------------------------- Github Review Process Starting... ------------------------- \n`)
+    logger.info(`------------------------------- Github Review Process Starting... ------------------------- \n`)
     try {
         // 1. Fetch all repos where the bot is the assigned reviewer
         const repos = await fetchReviewRequests();//await fetchUserRepositories();
-        console.log(`------------------------------- ${repos.length} REPOS FOUND REQUIRING REVIEW ------------------------- \n`)
+        logger.info(`------------------------------- ${repos.length} REPOS FOUND REQUIRING REVIEW ------------------------- \n`)
 
         // 2. Push each PR job to the queue
         for (const repo of repos) {
-            console.log('Id: ', repo.id)
             console.log('Title: ', repo.title);
             console.log('URL: ', repo.url);
             //console.log(repo)
@@ -26,10 +27,10 @@ eventEmitter.on('start:polling:github', async () => {
                 { repoId: repo.id, repoUrl: repo.repository_url, prNumber: repo.number },
                 { jobId: `pr-${repo.id}` } // used for deduplication
             );
-            console.log(`------------------------------- ${repo.title} PUSHED TO QUEUE ------------------------- \n`)
+            logger.info(`------------------------------- ${repo.title} PUSHED TO QUEUE ------------------------- \n`)
         }
 
-        console.log(await reviewQueue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed'));
+        // console.log(await reviewQueue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed'));
 
         // 3. Import and start worker
         await import('./review-queue/worker');
@@ -53,7 +54,7 @@ eventEmitter.on('start:polling:github', async () => {
         //console.log(`Success! Status: ${result.status}. Rate limit remaining: ${result.headers["x-ratelimit-remaining"]}`)
         //console.log(prs.data)
     } catch (err) {
-        console.log(err)
+        logger.error(err)
         //console.log(`Error! Status: ${err.status}. Rate limit remaining: ${err.headers["x-ratelimit-remaining"]}. Message: ${error.response.data.message}`)
     }
 })
