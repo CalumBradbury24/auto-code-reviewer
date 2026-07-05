@@ -4,6 +4,7 @@ import logger from 'logger';
 import { eventEmitter } from './events';
 import { reviewQueue } from './review-queue/queue';
 import { fetchReviewRequests } from './github/github.api';
+import { ensureModelReady } from 'llm-service';
 
 // Start express app
 const app = express();
@@ -13,11 +14,14 @@ eventEmitter.on('start:polling:github', async () => {
 
     logger.info(`------------------------------- Github Review Process Starting... ------------------------- \n`)
     try {
-        // 1. Fetch all repos where the bot is the assigned reviewer
+        // 1. Get all available models and return the first one that is ready to process a review
+        const availableModels = await ensureModelReady();
+
+        // 2. Fetch all repos where the bot is the assigned reviewer
         const repos = await fetchReviewRequests();//await fetchUserRepositories();
         logger.info(`------------------------------- ${repos.length} REPOS FOUND REQUIRING REVIEW ------------------------- \n`)
 
-        // 2. Push each PR job to the queue
+        // 3. Push each PR job to the queue
         for (const repo of repos) {
             console.log('Title: ', repo.title);
             console.log('URL: ', repo.url);
@@ -32,10 +36,10 @@ eventEmitter.on('start:polling:github', async () => {
 
         // console.log(await reviewQueue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed'));
 
-        // 3. Import and start worker
+        // 4. Import and start worker
         await import('./review-queue/worker');
 
-        // 3. Fetch diffs for each matching PR
+
 
 
         // for (const pr of assigned) {

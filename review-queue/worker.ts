@@ -2,6 +2,7 @@ import logger from 'logger';
 import { Worker } from 'bullmq';
 import { redisConnection } from './config';
 import { fetchPrDiffs } from 'github/github.api';
+import { getCodeReview } from 'llm-service';
 
 // Create worker that processes jobs synchronously (one at a time)
 const reviewWorker = new Worker(
@@ -15,8 +16,7 @@ const reviewWorker = new Worker(
         const diffs = await fetchPrDiffs({ repository_url: repoUrl, pr_number: prNumber });
         // console.log('DIFFF --->>> ', diffs)
 
-
-        // await performCodeReview(repoId, title, url);
+        // await getCodeReview(repoId, title, url);
 
         // Simulate some work
         await new Promise(resolve => setTimeout(resolve, 3000));
