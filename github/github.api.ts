@@ -1,6 +1,7 @@
 import { Octokit } from 'octokit';
 import { AuthedUserListReposResponse, SearchIssuesAndPrsGetResponseItems } from './types';
 import logger from 'logger';
+import { ReviewComment } from 'review-service/types';
 
 const githubApi = new Octokit({
     auth: process.env.GITHUB_REVIEW_BOT_TOKEN, //process.env.GITHUB_API_TOKEN
@@ -93,24 +94,63 @@ export async function fetchReviewRequests(): Promise<SearchIssuesAndPrsGetRespon
     return response;
 }
 
-type fetchPrDiffsProps = {
+const getPrRepoUrlInfo = (repository_url: SearchIssuesAndPrsGetResponseItems[number]['repository_url']) => {
+    const repoUrl = repository_url.match(/repos\/([^/]+)\/([^/]+)/);
+    if (!repoUrl) throw new Error(`Could not parse owner and repo from URL: ${repoUrl}`);
+    const [, owner, repo] = repoUrl;
+    return [owner, repo];
+}
+
+type FetchPrDiffs = {
     repository_url: SearchIssuesAndPrsGetResponseItems[number]['repository_url'],
     pr_number: SearchIssuesAndPrsGetResponseItems[number]['number'],
 
 }
-export async function fetchPrDiffs({ repository_url, pr_number }: fetchPrDiffsProps) {
-    const repoUrl = repository_url.match(/repos\/([^/]+)\/([^/]+)/);
-
-    if (!repoUrl) throw new Error(`Could not parse owner and repo from URL: ${repoUrl}`);
-    const [, owner, repo] = repoUrl;
+export async function fetchPrDiffs({ repository_url, pr_number }: FetchPrDiffs) {
+    const [owner, repo] = getPrRepoUrlInfo(repository_url);
 
     const { data: diff } = await githubApi.pulls.get({
         owner,
         repo,
         pull_number: pr_number,
-        mediaType: { format: "diff" }
+        mediaType: { format: "diff" },
     });
 
     // console.log('DIFFF --->>> ', diff)
     return diff;
+}
+
+type PostReview = {
+    repository_url: SearchIssuesAndPrsGetResponseItems[number]['repository_url'],
+    pr_number: SearchIssuesAndPrsGetResponseItems[number]['number'],
+    reviewSummary: string,
+    comments: ReviewComment[],
+    event: 'APPROVE' | 'COMMENT' | 'REQUEST_CHANGES';
+}
+
+export async function postReview({
+    repository_url,
+    pr_number,
+    reviewSummary,
+    comments,
+    event
+}: PostReview) {
+    const [owner, repo] = getPrRepoUrlInfo(repository_url);
+
+    // Post review with line-specific comments
+    await githubApi.pulls.createReview({
+        owner,
+        repo,
+        pull_number: pr_number,
+        body: reviewSummary,
+        event: comments.length ? event : 'APPROVE', // No comments -> default to approve
+        comments: comments.map(comment => ({
+            path: comment.path,
+            line: comment.line,
+            body: comment.body,
+            side: 'RIGHT' // Comment on the new version of the file
+        }))
+    });
+
+    logger.info(`Posted review to ${repository_url} with ${comments.length} comments`);
 }

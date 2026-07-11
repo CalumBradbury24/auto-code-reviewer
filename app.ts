@@ -15,7 +15,7 @@ eventEmitter.on('start:polling:github', async () => {
     logger.info(`------------------------------- Github Review Process Starting... ------------------------- \n`)
     try {
         // 1. Get all available models and return the first one that is ready to process a review
-        const availableModels = await ensureModelReady();
+        await ensureModelReady();
 
         // 2. Fetch all repos where the bot is the assigned reviewer
         const repos = await fetchReviewRequests();//await fetchUserRepositories();

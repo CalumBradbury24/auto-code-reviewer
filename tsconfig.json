@@ -30,6 +30,7 @@
   "include": [
     "src/**/*",
     "*.ts",
-    "github/github.api.ts"
+    "github/github.api.ts",
+    "review-service/llm-service.ts"
   ]
 }
