@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { CodeReviewResult } from './types';
 
-let availableReviewModel;
+let availableReviewModel: string;
 
 const client = new OpenAI({
     baseURL: process.env.LM_STUDIO_URL || 'http://localhost:1234/v1',
@@ -82,10 +82,10 @@ export const getCodeReview = async (diffs: string) => {
     if (!process.env.REVIEW_MODELS?.length) throw new Error('Must provide at least one valid LLM in config for the review');
 
     const response = await client.chat.completions.create({
-        model: process.env.REVIEW_MODEL || 'local-model',
+        model: availableReviewModel,
         messages: [
             { role: 'system', content: SYSTEM_PROMPT }, // Sets the AI's behviour/personality etc
-            { role: 'user', content: `Review the following code changes:\n\n${diffs}` }
+            { role: 'user', content: `Review the following code changes:\n\n${diffs}` } // Actual prompt with code review request
         ],
         max_tokens: 2000,
         temperature: 0, // More deterministic responses

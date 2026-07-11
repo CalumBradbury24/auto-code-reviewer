@@ -4,7 +4,8 @@ import logger from 'logger';
 import { eventEmitter } from './events';
 import { reviewQueue } from './review-queue/queue';
 import { fetchReviewRequests } from './github/github.api';
-import { ensureModelReady } from 'llm-service';
+import { ensureModelReady } from './review-service/llm-service';
+
 
 // Start express app
 const app = express();
@@ -40,7 +41,7 @@ eventEmitter.on('start:polling:github', async () => {
         await import('./review-queue/worker');
 
 
-
+        //process.exit(1);
 
         // for (const pr of assigned) {
         //     const diff = await octokit.request(
