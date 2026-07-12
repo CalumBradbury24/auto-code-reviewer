@@ -9,18 +9,16 @@ import { CodeReviewResult } from 'review-service/types';
 const reviewWorker = new Worker(
     'review-queue',
     async (job) => {
-        logger.info(`\n🔄 Processing job ${job.id}...`);
-        logger.info('Job data:', job.data);
+        logger.info(`🔄 Processing review job for ${job.data.repoUrl}...`);
 
         const { repoUrl, prNumber } = job.data;
 
         const diffs = await fetchPrDiffs({ repository_url: repoUrl, pr_number: prNumber });
         if (!diffs.length) {
-            console.warn('No diffs found for review');
+            logger.warn('⚠️ No diffs found for review');
             return { success: true };
         }
 
-        logger.info(`Getting review for ${repoUrl}`)
         const { summary, positives, comments, overallRecommendation }: CodeReviewResult = await getCodeReview(diffs);
 
         // Format summary with positives if any
@@ -31,11 +29,6 @@ const reviewWorker = new Worker(
         }
 
         await postReview({ repository_url: repoUrl, pr_number: prNumber, reviewSummary, comments, event: overallRecommendation });
-
-        // Simulate some work
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        logger.info(`✅ Completed job ${job.id}`);
         return { success: true };
     },
     {
@@ -46,19 +39,19 @@ const reviewWorker = new Worker(
 
 // Worker event listeners
 reviewWorker.on('completed', (job) => {
-    logger.info(`✓ Job ${job.id} completed successfully`);
+    logger.info(`✅ Job ${job.id} completed successfully`);
 });
 
 reviewWorker.on('failed', (job, err) => {
-    logger.error(`✗ Job ${job?.id} failed:`, err.message);
+    logger.error(`❌ Job ${job?.id} failed:`, err.message);
 });
 
 reviewWorker.on('ready', () => {
-    logger.info('✓ Worker connected and ready to process jobs');
+    logger.info('✅ Worker connected and ready to process jobs');
 });
 
 reviewWorker.on('error', (err) => {
-    logger.error('✗ Worker error:', err);
+    logger.error('❌ Worker error:', err);
 });
 
 export { reviewWorker };

@@ -1,7 +1,6 @@
 import { Octokit } from 'octokit';
-import { AuthedUserListReposResponse, SearchIssuesAndPrsGetResponseItems } from './types';
+import { AuthedUserListReposResponse, SearchIssuesAndPrsGetResponseItems, PaginatedData, FetchPrDiffs, PostReview } from './types';
 import logger from 'logger';
-import { ReviewComment } from 'review-service/types';
 
 const githubApi = new Octokit({
     auth: process.env.GITHUB_REVIEW_BOT_TOKEN, //process.env.GITHUB_API_TOKEN
@@ -34,22 +33,11 @@ function parseData(data: any) {
     return data;
 }
 
-type getPaginatedDataProps<T> = {
-    apiFunction: (options: any) => Promise<{ data: any; headers: any }>,
-    options: {
-        per_page: number;
-        page: number;
-        q?: string;
-        affiliation?: string;
-    }
-}
-
-const getPaginatedData = async <T>({ apiFunction, options }: getPaginatedDataProps<T>): Promise<T[]> => {
+const getPaginatedData = async <T>({ apiFunction, options }: PaginatedData<T>): Promise<T[]> => {
     let pagesRemaining = true;
     let data: T[] = [];
 
     while (pagesRemaining) {
-        logger.info('Fetching page: ', options.page || '1')
         const response = await apiFunction(options);
 
         const parsedData = parseData(response.data)
@@ -101,11 +89,6 @@ const getPrRepoUrlInfo = (repository_url: SearchIssuesAndPrsGetResponseItems[num
     return [owner, repo];
 }
 
-type FetchPrDiffs = {
-    repository_url: SearchIssuesAndPrsGetResponseItems[number]['repository_url'],
-    pr_number: SearchIssuesAndPrsGetResponseItems[number]['number'],
-
-}
 export async function fetchPrDiffs({ repository_url, pr_number }: FetchPrDiffs) {
     const [owner, repo] = getPrRepoUrlInfo(repository_url);
 
@@ -116,17 +99,9 @@ export async function fetchPrDiffs({ repository_url, pr_number }: FetchPrDiffs) 
         mediaType: { format: "diff" },
     });
 
-    // console.log('DIFFF --->>> ', diff)
     return diff;
 }
 
-type PostReview = {
-    repository_url: SearchIssuesAndPrsGetResponseItems[number]['repository_url'],
-    pr_number: SearchIssuesAndPrsGetResponseItems[number]['number'],
-    reviewSummary: string,
-    comments: ReviewComment[],
-    event: 'APPROVE' | 'COMMENT' | 'REQUEST_CHANGES';
-}
 
 export async function postReview({
     repository_url,
@@ -152,5 +127,5 @@ export async function postReview({
         }))
     });
 
-    logger.info(`Posted review to ${repository_url} with ${comments.length} comments`);
+    return logger.info(`📩 Posted review to ${repository_url} with ${comments.length} comments`);
 }

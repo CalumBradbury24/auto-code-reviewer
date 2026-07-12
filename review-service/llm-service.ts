@@ -19,9 +19,9 @@ const SYSTEM_PROMPT = readFileSync(
 );
 
 async function checkModelReadyStatus(modelId: OpenAI.Models.Model['id']) {
-    if (!modelId) logger.warn(`local llm with id ${modelId} not configured`);
+    if (!modelId) logger.warn(`❌ local llm with id ${modelId} not configured`);
 
-    logger.info(`Checking if model "${modelId}" is loaded...`);
+    logger.info(`🧪 Checking if model "${modelId}" is loaded...`);
 
     try {
         // Make a minimal test request
@@ -31,10 +31,10 @@ async function checkModelReadyStatus(modelId: OpenAI.Models.Model['id']) {
             max_tokens: 1
         });
 
-        logger.info(`✓ Model "${modelId}" loaded and ready`);
+        logger.info(`✅ Model "${modelId}" loaded and ready`);
         return true;
     } catch (error) {
-        logger.warn(`✗ Model "${modelId}" is not loaded or not responding`);
+        logger.warn(`❌ Model "${modelId}" is not loaded or not responding`);
         return false;
     }
 }
@@ -50,7 +50,7 @@ async function getFirstReadyModel(models: OpenAI.Models.Model[]) {
         }
     }
 
-    throw new Error('No models currently available');
+    throw new Error('❌ No models currently available');
 }
 
 
@@ -123,7 +123,7 @@ export const getCodeReview = async (diffs: string) => {
             { role: 'user', content: `Review the following code changes:\n\n${annotateDiff(diffs)}` } // Actual prompt with code review request
         ],
         max_tokens: 2000,
-        //  temperature: 0, // More deterministic responses
+        temperature: 0, // More deterministic responses
     });
 
     const rawReviewContent = response.choices[0]?.message.content;
@@ -132,7 +132,6 @@ export const getCodeReview = async (diffs: string) => {
     try {
         // The model can sometimes return JSON in markdown like ```json {key: value}```, so we need to parse this to extract the raw JSON
         const parsedReview: CodeReviewResult = JSON.parse(extractJSON(rawReviewContent));
-        console.log('REVIEW --->>> ', parsedReview)
         return parsedReview;
     } catch (error) {
         logger.error('Failed to parse JSON:', error);
