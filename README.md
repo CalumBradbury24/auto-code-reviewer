@@ -6,7 +6,14 @@ A self-hosted GitHub bot that automatically reviews pull requests using local La
 
 This LLM Code Reviewer monitors GitHub repositories where a given bot is assigned for PR review requests and provides intelligent, contextual code reviews using locally hosted LLMs.
 
-**[Screenshot: Example PR review with inline comments - Placeholder]**
+![Approved review](./img/approved-review.png)
+
+![Low priority review comment](./img/low-priority.png)
+
+![Medium priority review comment](./img/medium-priority.png)
+
+![Critical priority review comment](./img/critical-priority.png)
+
 
 ## Key Features
 
@@ -18,7 +25,6 @@ This LLM Code Reviewer monitors GitHub repositories where a given bot is assigne
 - **Constructive Feedback** - Generates collaborative, actionable suggestions rather than prescriptive criticism
 - **Comment Throttling** - Limits to 12 most impactful comments per review to avoid overwhelming developers
 
-**[Screenshot: Bot review comment with severity indicators - Placeholder]**
 
 ## Architecture
 
@@ -121,8 +127,6 @@ Polling Timer → GitHub API (Fetch PRs) → BullMQ Queue → Worker
    - Overall summary and recommendation (Approve/Comment/Request Changes)
    - Line-specific comments with severity indicators
    - Positive observations about good practices
-
-**[Screenshot: Full PR review example - Placeholder]**
 
 ## Configuration
 
