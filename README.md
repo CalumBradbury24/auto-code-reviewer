@@ -6,7 +6,11 @@ A self-hosted GitHub bot that automatically reviews pull requests using local La
 
 This LLM Code Reviewer monitors GitHub repositories where a given bot is assigned for PR review requests and provides intelligent, contextual code reviews using locally hosted LLMs.
 
+### Approved review
+
 ![Approved review](./img/approved-review.png)
+
+### Review with varying severities of changes requested
 
 ![Low priority review comment](./img/low-priority.png)
 
