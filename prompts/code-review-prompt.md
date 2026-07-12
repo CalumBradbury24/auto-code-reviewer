@@ -27,8 +27,8 @@ Key points:
 - `@@ -old_start,old_count +new_start,new_count @@` shows line numbers
 - Lines starting with `+` are additions (focus your review here)
 - Lines starting with `-` are deletions
-- The `+new_start` number tells you the starting line number in the new file
-- Count line by line from there to determine exact line numbers
+- **Each changed and context line has been pre-annotated with `[L{n}]`** where `n` is its exact line number in the new version of the file
+- Use the `[L{n}]` number directly as the `line` field in your JSON output — do not recalculate from the hunk header
 
 ## Review Focus Areas
 

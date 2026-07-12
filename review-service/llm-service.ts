@@ -66,6 +66,41 @@ export const ensureModelReady = async () => {
     return reviewModel;
 };
 
+// Utility function that helps better annotate the lines the review refers to
+function annotateDiff(diff: string): string {
+    const lines = diff.split('\n');
+    const annotated: string[] = [];
+    let newLineNumber = 0;
+
+    for (const line of lines) {
+        // New hunk header — extract the new file start line
+        const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+        if (hunkMatch) {
+            newLineNumber = parseInt(hunkMatch[1]!, 10);
+            annotated.push(line);
+            continue;
+        }
+
+        if (line.startsWith('+') && !line.startsWith('+++')) {
+            // Added line — annotate with its new file line number
+            annotated.push(`[L${newLineNumber}] ${line}`);
+            newLineNumber++;
+        } else if (line.startsWith(' ')) {
+            // Context line — still counts toward new file line numbers
+            annotated.push(`[L${newLineNumber}] ${line}`);
+            newLineNumber++;
+        } else if (line.startsWith('-') && !line.startsWith('---')) {
+            // Removed line — no new file line number
+            annotated.push(line);
+        } else {
+            // diff --git, ---, +++, \No newline, etc.
+            annotated.push(line);
+        }
+    }
+
+    return annotated.join('\n');
+}
+
 function extractJSON(text: string) {
     // Try to find JSON in markdown code blocks first
     const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
@@ -85,10 +120,10 @@ export const getCodeReview = async (diffs: string) => {
         model: availableReviewModel,
         messages: [
             { role: 'system', content: SYSTEM_PROMPT }, // Sets the AI's behviour/personality etc
-            { role: 'user', content: `Review the following code changes:\n\n${diffs}` } // Actual prompt with code review request
+            { role: 'user', content: `Review the following code changes:\n\n${annotateDiff(diffs)}` } // Actual prompt with code review request
         ],
         max_tokens: 2000,
-        temperature: 0, // More deterministic responses
+        //  temperature: 0, // More deterministic responses
     });
 
     const rawReviewContent = response.choices[0]?.message.content;
